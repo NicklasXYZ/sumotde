@@ -204,7 +204,7 @@ def execute_all(
                         estimator_options=estimator_options,
                         collect_directory=collect_directory,
                     )
-                    # quit()
+                    quit()
             else:
                 seedmat = seedmats[0]
                 runner(
@@ -215,46 +215,46 @@ def execute_all(
                     estimator_options=estimator_options,
                     collect_directory=collect_directory,
                 )
-                # quit()
+                quit()
 
     ### Execute experiments related to surrogate-based algorithms
     # Set possible options
-    surrogate_models = ["fnn", "knn"]
-    evaluate_output_methods = ["simdata_output"]
+    # surrogate_models = ["fnn", "knn"]
+    # evaluate_output_methods = ["simdata_output"]
 
-    runner: Callable = run_surrogate_model_based_travel_demand_estimator
-    for surrogate_model in surrogate_models:
-        for evaluate_output_method in evaluate_output_methods:
-            for weight_configuration in weight_configurations:
+    # runner: Callable = run_surrogate_model_based_travel_demand_estimator
+    # for surrogate_model in surrogate_models:
+    #     for evaluate_output_method in evaluate_output_methods:
+    #         for weight_configuration in weight_configurations:
                 
-                estimator_options = common_estimator_options.copy()
-                estimator_options["weight_configuration"] = weight_configuration
-                estimator_options["n_samples"] = estimator_options["max_evals"]
-                estimator_options["sample_directory"] = sample_directory
-                estimator_options["evaluate_output"] = evaluate_output_method
-                estimator_options["method"] = surrogate_model
-                if weight_configuration["odmat"] != 0.0:
-                    for seedmat in seedmats:
-                        runner(
-                            config_filepath=config_filepath,
-                            scenario_options={"seedmat": seedmat},
-                            simulator_class=SumoMesoSimulationRun,
-                            simulator_options=simulator_options,
-                            estimator_options=estimator_options,
-                            collect_directory=collect_directory,
-                        )
-                        # quit()
-                else:
-                    seedmat = seedmats[0]
-                    runner(
-                        config_filepath=config_filepath,
-                        scenario_options={"seedmat": seedmat},
-                        simulator_class=SumoMesoSimulationRun,
-                        simulator_options=simulator_options,
-                        estimator_options=estimator_options,
-                        collect_directory=collect_directory,
-                    )
-                    # quit()
+    #             estimator_options = common_estimator_options.copy()
+    #             estimator_options["weight_configuration"] = weight_configuration
+    #             estimator_options["n_samples"] = estimator_options["max_evals"]
+    #             estimator_options["sample_directory"] = sample_directory
+    #             estimator_options["evaluate_output"] = evaluate_output_method
+    #             estimator_options["method"] = surrogate_model
+    #             if weight_configuration["odmat"] != 0.0:
+    #                 for seedmat in seedmats:
+    #                     runner(
+    #                         config_filepath=config_filepath,
+    #                         scenario_options={"seedmat": seedmat},
+    #                         simulator_class=SumoMesoSimulationRun,
+    #                         simulator_options=simulator_options,
+    #                         estimator_options=estimator_options,
+    #                         collect_directory=collect_directory,
+    #                     )
+    #                     quit()
+    #             else:
+    #                 seedmat = seedmats[0]
+    #                 runner(
+    #                     config_filepath=config_filepath,
+    #                     scenario_options={"seedmat": seedmat},
+    #                     simulator_class=SumoMesoSimulationRun,
+    #                     simulator_options=simulator_options,
+    #                     estimator_options=estimator_options,
+    #                     collect_directory=collect_directory,
+    #                 )
+    #                 quit()
 
 
 def generate_scenario(
