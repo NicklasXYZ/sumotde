@@ -1,0 +1,4 @@
+{
+    "file_io": "{\n    \"date_time\": \"2022-01-22 20:14:44.902438+00:00\",\n    \"directory_counter\": \"0\",\n    \"output_directory_identifier\": \"\",\n    \"root_input_directory\": \"\",\n    \"uid\": \"09fe330b-397c-458e-9dbc-ae0c1f3c51cd\"\n}",
+    "scenario_data": "{\n    \"aggregation_intervals\": \"4\",\n    \"interval_end\": \"3600\",\n    \"interval_increment\": \"900\",\n    \"interval_start\": \"0\",\n    \"network\": \"{\\n    \\\"det\\\": \\\"input_files/network/sumo-grid-network-od132.det.xml\\\",\\n    \\\"det_subset\\\": \\\"input_files/network/sumo-grid-network-od132_100.det_subset.xml\\\",\\n    \\\"net\\\": \\\"input_files/network/sumo-grid-network-od132.net.xml\\\",\\n    \\\"taz\\\": \\\"input_files/network/sumo-grid-network-od132.taz.xml\\\"\\n}\",\n    \"random_seed\": \"321\"\n}"
+}

@@ -1,0 +1,249 @@
+
+Executing...
+
+TODO: Check non-negativity constraints
+TODO: Check non-negativity constraints
+New algorithm run:
+scenario_options :  {'seedmat': 'seedmat07'} 
+ simulator_options:  {'random_seed': 111, 'last_step': 15, 'convergence_steps': 15, 'gA': 1.0, 'gBeta': 0.75} 
+ estimator_options:  {'max_evals': 200, 'stopping_criteria': ['max_evals'], 'weight_configuration': {'odmat': 0.0, 'counts': 1.0}, 'n_samples': 200, 'sample_directory': 'static/_8a80589f-6047-478b-a703-30d723c66854', 'evaluate_output': 'simdata_output', 'method': 'fnn'} 
+
+
+Training a new 'fnn:simdata_output' model...
+Fitting fnn multi-target model!
+----> Best OF evaluation:  0.34028380449499185
+Fitting 5 folds for each of 12 candidates, totalling 60 fits
+Best Estimator Score     :  -589.2922346314128
+Best Estimator Parameters: 
+
+Parameter: reg__hidden_layer_sizes, Value: (396, 132, 132)
+Parameter: reg__alpha, Value: 0.0001
+Overwriting existing '.csv' file!
+INFO: Optimization restults        : 
+INFO: Objective function (OF) value: 0.2938301262235785
+result_x: 
+          value    from      to   begin     end  slice
+0     0.000000   taz_0   taz_1     0.0   900.0      0
+1    11.661836   taz_0   taz_2     0.0   900.0      0
+2    23.594911   taz_0   taz_3     0.0   900.0      0
+3    17.745339   taz_0   taz_4     0.0   900.0      0
+4     5.812206   taz_0   taz_5     0.0   900.0      0
+..         ...     ...     ...     ...     ...    ...
+523  19.958715  taz_11   taz_6  2700.0  3600.0      3
+524  23.468486  taz_11   taz_7  2700.0  3600.0      3
+525   0.000000  taz_11   taz_8  2700.0  3600.0      3
+526  22.064446  taz_11   taz_9  2700.0  3600.0      3
+527  10.365434  taz_11  taz_10  2700.0  3600.0      3
+
+[528 rows x 6 columns]
+Generating sumo input files before running simulations...
+odmat self.simulation_files:  None
+odmat self.simulation_files:  {'odmat': 'static/_47fe602b-1b9a-4325-b63e-e4b2533eeff4/0/odmat.csv'}
+Commandline args:  python /usr/share/sumo/tools/assign/duaIteratev3.py --net-file ../../../input_files/network/sumo-grid-network-od132.net.xml --trips trips.xml --last-step 15 --convergence-steps 15 --output-path static/_47fe602b-1b9a-4325-b63e-e4b2533eeff4/0 --begin 0 --end 4500 --mesosim --time-to-teleport 4500 --disable-tripinfos --disable-summary duarouter--seed 111 duarouter--remove-loops duarouter--xml-validation never sumo--xml-validation never sumo--vehroute-output vehRoutes.veh.xml sumo--vehroute-output.sorted sumo--vehroute-output.exit-times sumo--vehroute-output.last-route sumo--vehroute-output.write-unfinished sumo--default.speeddev 0 sumo--meso-junction-control sumo--max-depart-delay 4500
+Call to <function SumoMesoSimulationRun._read_vehRoute_file at 0x7f795f96a820>. Elapsed time (sysusr): 0.7844471349999367
+Call to <function SumoMesoSimulationRun._read_vehRoute_file at 0x7f795f96a820>. Elapsed time (wall)  : 0.7859246730804443
+Call to <function SumoMesoSimulationRun.run_simulator at 0x7f795f96a3a0>. Elapsed time (sysusr): 1.4848581010010093
+Call to <function SumoMesoSimulationRun.run_simulator at 0x7f795f96a3a0>. Elapsed time (wall)  : 14.26598072052002
+FINAL OF VALUES:  {'odmat': (0.0, 0.9346387939323427), 'counts': (1.0, 0.23047873129941052)}
+            SUM:  0.23047873129941052
+Sample metadata '.json' file sample_metadata                     does not exist!
+TODO: Check non-negativity constraints
+TODO: Check non-negativity constraints
+New algorithm run:
+scenario_options :  {'seedmat': 'seedmat07'} 
+ simulator_options:  {'random_seed': 111, 'last_step': 15, 'convergence_steps': 15, 'gA': 1.0, 'gBeta': 0.75} 
+ estimator_options:  {'max_evals': 200, 'stopping_criteria': ['max_evals'], 'weight_configuration': {'odmat': 1.0, 'counts': 1.0}, 'n_samples': 200, 'sample_directory': 'static/_8a80589f-6047-478b-a703-30d723c66854', 'evaluate_output': 'simdata_output', 'method': 'fnn'} 
+
+
+An existing 'fnn:simdata_output' model was                         loaded...
+INFO: Optimization restults        : 
+INFO: Objective function (OF) value: 1.2627574506225283
+result_x: 
+          value    from      to   begin     end  slice
+0     0.000000   taz_0   taz_1     0.0   900.0      0
+1    11.661708   taz_0   taz_2     0.0   900.0      0
+2    23.594796   taz_0   taz_3     0.0   900.0      0
+3    17.745145   taz_0   taz_4     0.0   900.0      0
+4     5.812330   taz_0   taz_5     0.0   900.0      0
+..         ...     ...     ...     ...     ...    ...
+523  19.958499  taz_11   taz_6  2700.0  3600.0      3
+524  23.468278  taz_11   taz_7  2700.0  3600.0      3
+525   0.000000  taz_11   taz_8  2700.0  3600.0      3
+526  22.064299  taz_11   taz_9  2700.0  3600.0      3
+527  10.365373  taz_11  taz_10  2700.0  3600.0      3
+
+[528 rows x 6 columns]
+Generating sumo input files before running simulations...
+odmat self.simulation_files:  None
+odmat self.simulation_files:  {'odmat': 'static/_85257f78-e05e-4c91-a0fd-09a03187c9fb/0/odmat.csv'}
+Commandline args:  python /usr/share/sumo/tools/assign/duaIteratev3.py --net-file ../../../input_files/network/sumo-grid-network-od132.net.xml --trips trips.xml --last-step 15 --convergence-steps 15 --output-path static/_85257f78-e05e-4c91-a0fd-09a03187c9fb/0 --begin 0 --end 4500 --mesosim --time-to-teleport 4500 --disable-tripinfos --disable-summary duarouter--seed 111 duarouter--remove-loops duarouter--xml-validation never sumo--xml-validation never sumo--vehroute-output vehRoutes.veh.xml sumo--vehroute-output.sorted sumo--vehroute-output.exit-times sumo--vehroute-output.last-route sumo--vehroute-output.write-unfinished sumo--default.speeddev 0 sumo--meso-junction-control sumo--max-depart-delay 4500
+Call to <function SumoMesoSimulationRun._read_vehRoute_file at 0x7f795f96a820>. Elapsed time (sysusr): 0.7932819220004603
+Call to <function SumoMesoSimulationRun._read_vehRoute_file at 0x7f795f96a820>. Elapsed time (wall)  : 0.7949779033660889
+Call to <function SumoMesoSimulationRun.run_simulator at 0x7f795f96a3a0>. Elapsed time (sysusr): 1.5678926420005155
+Call to <function SumoMesoSimulationRun.run_simulator at 0x7f795f96a3a0>. Elapsed time (wall)  : 14.28087306022644
+FINAL OF VALUES:  {'odmat': (1.0, 0.9346265701532468), 'counts': (1.0, 0.23047873129941052)}
+            SUM:  1.1651053014526573
+Sample metadata '.json' file sample_metadata                     does not exist!
+TODO: Check non-negativity constraints
+TODO: Check non-negativity constraints
+New algorithm run:
+scenario_options :  {'seedmat': 'seedmat09'} 
+ simulator_options:  {'random_seed': 111, 'last_step': 15, 'convergence_steps': 15, 'gA': 1.0, 'gBeta': 0.75} 
+ estimator_options:  {'max_evals': 200, 'stopping_criteria': ['max_evals'], 'weight_configuration': {'odmat': 1.0, 'counts': 1.0}, 'n_samples': 200, 'sample_directory': 'static/_8a80589f-6047-478b-a703-30d723c66854', 'evaluate_output': 'simdata_output', 'method': 'fnn'} 
+
+
+An existing 'fnn:simdata_output' model was                         loaded...
+INFO: Optimization restults        : 
+INFO: Objective function (OF) value: 1.1250834421066327
+result_x: 
+          value    from      to   begin     end  slice
+0     0.000000   taz_0   taz_1     0.0   900.0      0
+1    11.661701   taz_0   taz_2     0.0   900.0      0
+2    23.594853   taz_0   taz_3     0.0   900.0      0
+3    17.745166   taz_0   taz_4     0.0   900.0      0
+4     5.812335   taz_0   taz_5     0.0   900.0      0
+..         ...     ...     ...     ...     ...    ...
+523  19.958500  taz_11   taz_6  2700.0  3600.0      3
+524  23.468338  taz_11   taz_7  2700.0  3600.0      3
+525   0.000000  taz_11   taz_8  2700.0  3600.0      3
+526  22.064298  taz_11   taz_9  2700.0  3600.0      3
+527  10.365350  taz_11  taz_10  2700.0  3600.0      3
+
+[528 rows x 6 columns]
+Generating sumo input files before running simulations...
+odmat self.simulation_files:  None
+odmat self.simulation_files:  {'odmat': 'static/_50691ba5-ea7b-4e48-b10e-8b4fc8523ab5/0/odmat.csv'}
+Commandline args:  python /usr/share/sumo/tools/assign/duaIteratev3.py --net-file ../../../input_files/network/sumo-grid-network-od132.net.xml --trips trips.xml --last-step 15 --convergence-steps 15 --output-path static/_50691ba5-ea7b-4e48-b10e-8b4fc8523ab5/0 --begin 0 --end 4500 --mesosim --time-to-teleport 4500 --disable-tripinfos --disable-summary duarouter--seed 111 duarouter--remove-loops duarouter--xml-validation never sumo--xml-validation never sumo--vehroute-output vehRoutes.veh.xml sumo--vehroute-output.sorted sumo--vehroute-output.exit-times sumo--vehroute-output.last-route sumo--vehroute-output.write-unfinished sumo--default.speeddev 0 sumo--meso-junction-control sumo--max-depart-delay 4500
+Call to <function SumoMesoSimulationRun._read_vehRoute_file at 0x7f795f96a820>. Elapsed time (sysusr): 0.7883106290028081
+Call to <function SumoMesoSimulationRun._read_vehRoute_file at 0x7f795f96a820>. Elapsed time (wall)  : 0.7894346714019775
+Call to <function SumoMesoSimulationRun.run_simulator at 0x7f795f96a3a0>. Elapsed time (sysusr): 1.5220888789990568
+Call to <function SumoMesoSimulationRun.run_simulator at 0x7f795f96a3a0>. Elapsed time (wall)  : 14.077618598937988
+FINAL OF VALUES:  {'odmat': (1.0, 0.7993428801435964), 'counts': (1.0, 0.23047873129941052)}
+            SUM:  1.029821611443007
+Sample metadata '.json' file sample_metadata                     does not exist!
+TODO: Check non-negativity constraints
+TODO: Check non-negativity constraints
+New algorithm run:
+scenario_options :  {'seedmat': 'seedmat07'} 
+ simulator_options:  {'random_seed': 111, 'last_step': 15, 'convergence_steps': 15, 'gA': 1.0, 'gBeta': 0.75} 
+ estimator_options:  {'max_evals': 200, 'stopping_criteria': ['max_evals'], 'weight_configuration': {'odmat': 0.0, 'counts': 1.0}, 'n_samples': 200, 'sample_directory': 'static/_8a80589f-6047-478b-a703-30d723c66854', 'evaluate_output': 'simdata_output', 'method': 'knn'} 
+
+
+Training a new 'knn:simdata_output' model...
+Fitting knn multi-target model!
+----> Best OF evaluation:  0.34028380449499185
+Fitting 5 folds for each of 14 candidates, totalling 70 fits
+Best Estimator Score     :  -623.0730645224896
+Best Estimator Parameters: 
+
+Parameter: reg__weights, Value: uniform
+Parameter: reg__p, Value: 2
+Parameter: reg__n_neighbors, Value: 43
+Overwriting existing '.csv' file!
+INFO: Optimization restults        : 
+INFO: Objective function (OF) value: 0.2851814369601005
+result_x: 
+          value    from      to   begin     end  slice
+0     0.000000   taz_0   taz_1     0.0   900.0      0
+1     0.000000   taz_0   taz_2     0.0   900.0      0
+2    19.462093   taz_0   taz_3     0.0   900.0      0
+3    19.897212   taz_0   taz_4     0.0   900.0      0
+4     5.175112   taz_0   taz_5     0.0   900.0      0
+..         ...     ...     ...     ...     ...    ...
+523  29.949915  taz_11   taz_6  2700.0  3600.0      3
+524  22.641180  taz_11   taz_7  2700.0  3600.0      3
+525   0.000000  taz_11   taz_8  2700.0  3600.0      3
+526  25.204290  taz_11   taz_9  2700.0  3600.0      3
+527   9.869402  taz_11  taz_10  2700.0  3600.0      3
+
+[528 rows x 6 columns]
+Generating sumo input files before running simulations...
+odmat self.simulation_files:  None
+odmat self.simulation_files:  {'odmat': 'static/_836aea00-d1c7-48f0-b976-f69d4db64db9/0/odmat.csv'}
+Commandline args:  python /usr/share/sumo/tools/assign/duaIteratev3.py --net-file ../../../input_files/network/sumo-grid-network-od132.net.xml --trips trips.xml --last-step 15 --convergence-steps 15 --output-path static/_836aea00-d1c7-48f0-b976-f69d4db64db9/0 --begin 0 --end 4500 --mesosim --time-to-teleport 4500 --disable-tripinfos --disable-summary duarouter--seed 111 duarouter--remove-loops duarouter--xml-validation never sumo--xml-validation never sumo--vehroute-output vehRoutes.veh.xml sumo--vehroute-output.sorted sumo--vehroute-output.exit-times sumo--vehroute-output.last-route sumo--vehroute-output.write-unfinished sumo--default.speeddev 0 sumo--meso-junction-control sumo--max-depart-delay 4500
+Call to <function SumoMesoSimulationRun._read_vehRoute_file at 0x7f795f96a820>. Elapsed time (sysusr): 0.7843304279958829
+Call to <function SumoMesoSimulationRun._read_vehRoute_file at 0x7f795f96a820>. Elapsed time (wall)  : 0.7872841358184814
+Call to <function SumoMesoSimulationRun.run_simulator at 0x7f795f96a3a0>. Elapsed time (sysusr): 1.577722474001348
+Call to <function SumoMesoSimulationRun.run_simulator at 0x7f795f96a3a0>. Elapsed time (wall)  : 14.208695650100708
+FINAL OF VALUES:  {'odmat': (0.0, 1.081658901577911), 'counts': (1.0, 0.2992268120434895)}
+            SUM:  0.2992268120434895
+Sample metadata '.json' file sample_metadata                     does not exist!
+TODO: Check non-negativity constraints
+TODO: Check non-negativity constraints
+New algorithm run:
+scenario_options :  {'seedmat': 'seedmat07'} 
+ simulator_options:  {'random_seed': 111, 'last_step': 15, 'convergence_steps': 15, 'gA': 1.0, 'gBeta': 0.75} 
+ estimator_options:  {'max_evals': 200, 'stopping_criteria': ['max_evals'], 'weight_configuration': {'odmat': 1.0, 'counts': 1.0}, 'n_samples': 200, 'sample_directory': 'static/_8a80589f-6047-478b-a703-30d723c66854', 'evaluate_output': 'simdata_output', 'method': 'knn'} 
+
+
+Training a new 'knn:simdata_output' model...
+An existing 'knn:simdata_output' model was                         loaded...
+INFO: Optimization restults        : 
+INFO: Objective function (OF) value: 1.275885406522487
+result_x: 
+          value    from      to   begin     end  slice
+0     0.000000   taz_0   taz_1     0.0   900.0      0
+1    11.661659   taz_0   taz_2     0.0   900.0      0
+2    23.594840   taz_0   taz_3     0.0   900.0      0
+3    17.745169   taz_0   taz_4     0.0   900.0      0
+4     5.812317   taz_0   taz_5     0.0   900.0      0
+..         ...     ...     ...     ...     ...    ...
+523  19.958448  taz_11   taz_6  2700.0  3600.0      3
+524  23.468212  taz_11   taz_7  2700.0  3600.0      3
+525   0.000000  taz_11   taz_8  2700.0  3600.0      3
+526  22.064372  taz_11   taz_9  2700.0  3600.0      3
+527  10.365272  taz_11  taz_10  2700.0  3600.0      3
+
+[528 rows x 6 columns]
+Generating sumo input files before running simulations...
+odmat self.simulation_files:  None
+odmat self.simulation_files:  {'odmat': 'static/_c99ab3ed-3c05-4f3e-a864-b3a23aaa7091/0/odmat.csv'}
+Commandline args:  python /usr/share/sumo/tools/assign/duaIteratev3.py --net-file ../../../input_files/network/sumo-grid-network-od132.net.xml --trips trips.xml --last-step 15 --convergence-steps 15 --output-path static/_c99ab3ed-3c05-4f3e-a864-b3a23aaa7091/0 --begin 0 --end 4500 --mesosim --time-to-teleport 4500 --disable-tripinfos --disable-summary duarouter--seed 111 duarouter--remove-loops duarouter--xml-validation never sumo--xml-validation never sumo--vehroute-output vehRoutes.veh.xml sumo--vehroute-output.sorted sumo--vehroute-output.exit-times sumo--vehroute-output.last-route sumo--vehroute-output.write-unfinished sumo--default.speeddev 0 sumo--meso-junction-control sumo--max-depart-delay 4500
+Call to <function SumoMesoSimulationRun._read_vehRoute_file at 0x7f795f96a820>. Elapsed time (sysusr): 0.7665169889951358
+Call to <function SumoMesoSimulationRun._read_vehRoute_file at 0x7f795f96a820>. Elapsed time (wall)  : 0.7682111263275146
+Call to <function SumoMesoSimulationRun.run_simulator at 0x7f795f96a3a0>. Elapsed time (sysusr): 1.5636263380001765
+Call to <function SumoMesoSimulationRun.run_simulator at 0x7f795f96a3a0>. Elapsed time (wall)  : 14.167099475860596
+FINAL OF VALUES:  {'odmat': (1.0, 0.9346269292652495), 'counts': (1.0, 0.23047873129941052)}
+            SUM:  1.16510566056466
+Sample metadata '.json' file sample_metadata                     does not exist!
+TODO: Check non-negativity constraints
+TODO: Check non-negativity constraints
+New algorithm run:
+scenario_options :  {'seedmat': 'seedmat09'} 
+ simulator_options:  {'random_seed': 111, 'last_step': 15, 'convergence_steps': 15, 'gA': 1.0, 'gBeta': 0.75} 
+ estimator_options:  {'max_evals': 200, 'stopping_criteria': ['max_evals'], 'weight_configuration': {'odmat': 1.0, 'counts': 1.0}, 'n_samples': 200, 'sample_directory': 'static/_8a80589f-6047-478b-a703-30d723c66854', 'evaluate_output': 'simdata_output', 'method': 'knn'} 
+
+
+Training a new 'knn:simdata_output' model...
+An existing 'knn:simdata_output' model was                         loaded...
+INFO: Optimization restults        : 
+INFO: Objective function (OF) value: 1.1382113314857527
+result_x: 
+          value    from      to   begin     end  slice
+0     0.000000   taz_0   taz_1     0.0   900.0      0
+1    11.661651   taz_0   taz_2     0.0   900.0      0
+2    23.594898   taz_0   taz_3     0.0   900.0      0
+3    17.745189   taz_0   taz_4     0.0   900.0      0
+4     5.812322   taz_0   taz_5     0.0   900.0      0
+..         ...     ...     ...     ...     ...    ...
+523  19.958449  taz_11   taz_6  2700.0  3600.0      3
+524  23.468272  taz_11   taz_7  2700.0  3600.0      3
+525   0.000000  taz_11   taz_8  2700.0  3600.0      3
+526  22.064370  taz_11   taz_9  2700.0  3600.0      3
+527  10.365249  taz_11  taz_10  2700.0  3600.0      3
+
+[528 rows x 6 columns]
+Generating sumo input files before running simulations...
+odmat self.simulation_files:  None
+odmat self.simulation_files:  {'odmat': 'static/_e1ff12e9-8f84-4b98-b95a-8e55d14aa547/0/odmat.csv'}
+Commandline args:  python /usr/share/sumo/tools/assign/duaIteratev3.py --net-file ../../../input_files/network/sumo-grid-network-od132.net.xml --trips trips.xml --last-step 15 --convergence-steps 15 --output-path static/_e1ff12e9-8f84-4b98-b95a-8e55d14aa547/0 --begin 0 --end 4500 --mesosim --time-to-teleport 4500 --disable-tripinfos --disable-summary duarouter--seed 111 duarouter--remove-loops duarouter--xml-validation never sumo--xml-validation never sumo--vehroute-output vehRoutes.veh.xml sumo--vehroute-output.sorted sumo--vehroute-output.exit-times sumo--vehroute-output.last-route sumo--vehroute-output.write-unfinished sumo--default.speeddev 0 sumo--meso-junction-control sumo--max-depart-delay 4500
+Call to <function SumoMesoSimulationRun._read_vehRoute_file at 0x7f795f96a820>. Elapsed time (sysusr): 0.7573753710021265
+Call to <function SumoMesoSimulationRun._read_vehRoute_file at 0x7f795f96a820>. Elapsed time (wall)  : 0.7589340209960938
+Call to <function SumoMesoSimulationRun.run_simulator at 0x7f795f96a3a0>. Elapsed time (sysusr): 1.5750470389903057
+Call to <function SumoMesoSimulationRun.run_simulator at 0x7f795f96a3a0>. Elapsed time (wall)  : 14.126351356506348
+FINAL OF VALUES:  {'odmat': (1.0, 0.7993430241184946), 'counts': (1.0, 0.23047873129941052)}
+            SUM:  1.029821755417905
+Sample metadata '.json' file sample_metadata                     does not exist!
+
+Exiting...
+

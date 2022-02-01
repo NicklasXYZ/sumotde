@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<detSubset>
+	<info>
+		<randomSeed val="None"/>
+		<networkFile val="sumo-grid-network-od132.net.xml"/>
+		<arcsInNetwork val="None"/>
+		<arcsInTAZ val="None"/>
+		<arcsNotInTAZ val="None"/>
+		<detectorsInNetwork val="48"/>
+	</info>
+
+	<additional>
+		<inductionLoop id="10_16"/>
+		<inductionLoop id="10_9"/>
+		<inductionLoop id="13_14"/>
+		<inductionLoop id="13_19"/>
+		<inductionLoop id="13_7"/>
+		<inductionLoop id="14_13"/>
+		<inductionLoop id="14_15"/>
+		<inductionLoop id="14_20"/>
+		<inductionLoop id="14_8"/>
+		<inductionLoop id="15_14"/>
+		<inductionLoop id="15_16"/>
+		<inductionLoop id="15_21"/>
+		<inductionLoop id="15_9"/>
+		<inductionLoop id="16_10"/>
+		<inductionLoop id="16_15"/>
+		<inductionLoop id="16_22"/>
+		<inductionLoop id="19_13"/>
+		<inductionLoop id="19_20"/>
+		<inductionLoop id="19_25"/>
+		<inductionLoop id="20_14"/>
+		<inductionLoop id="20_19"/>
+		<inductionLoop id="20_21"/>
+		<inductionLoop id="20_26"/>
+		<inductionLoop id="21_15"/>
+		<inductionLoop id="21_20"/>
+		<inductionLoop id="21_22"/>
+		<inductionLoop id="21_27"/>
+		<inductionLoop id="22_16"/>
+		<inductionLoop id="22_21"/>
+		<inductionLoop id="22_28"/>
+		<inductionLoop id="25_19"/>
+		<inductionLoop id="25_26"/>
+		<inductionLoop id="26_20"/>
+		<inductionLoop id="26_25"/>
+		<inductionLoop id="26_27"/>
+		<inductionLoop id="27_21"/>
+		<inductionLoop id="27_26"/>
+		<inductionLoop id="27_28"/>
+		<inductionLoop id="28_22"/>
+		<inductionLoop id="28_27"/>
+		<inductionLoop id="7_13"/>
+		<inductionLoop id="7_8"/>
+		<inductionLoop id="8_14"/>
+		<inductionLoop id="8_7"/>
+		<inductionLoop id="8_9"/>
+		<inductionLoop id="9_10"/>
+		<inductionLoop id="9_15"/>
+		<inductionLoop id="9_8"/>
+	</additional>
+</detSubset>

@@ -1,0 +1,55 @@
+[tool.poetry]
+name = "fileserver"
+version = "0.1.0"
+description = ""
+license = "MIT"
+authors = ["NicklasXYZ"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+channels = "^3.0.4"
+djangorestframework = "^3.13.0"
+websockets = "^10.1"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+pre-commit = "^2.2.0"
+tomlkit = "^0.6"
+
+[tool.black]
+line-length = 80
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.mypy_cache
+  | \.tox
+  | \venv
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 80
+
+[tool.pytest.ini_options]
+# Directories that are not visited by pytest collector:
+norecursedirs = "*.egg .eggs dist build docs .tox .git __pycache__"
+
+# Extra options:
+addopts = [
+  "--strict-markers",
+  "--doctest-modules",
+  "--cov=rtdm",
+  "--cov-report=term:skip-covered",
+  "--cov-report=html",
+  "--cov-branch",
+  "--cov-append",
+  ]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

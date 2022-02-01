@@ -1,0 +1,75 @@
+# Read up on pre-commit
+# https://ljvmiranda921.github.io/notebook/2018/06/21/precommits-using-black-and-flake8/
+
+# Left pycharm settings untoched
+exclude: .idea/
+
+repos:
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v2.5.0
+  hooks:
+  - id: trailing-whitespace
+  - id: end-of-file-fixer
+  - id: check-docstring-first
+  - id: check-executables-have-shebangs
+  - id: check-json
+  - id: check-yaml
+  - id: check-toml
+  - id: debug-statements
+  - id: check-merge-conflict
+
+- repo: https://github.com/ambv/black
+  rev: 19.10b0
+  hooks:
+  - id: black
+    language_version: python3
+
+- repo: https://github.com/myint/docformatter
+  rev: v1.3.1
+  hooks:
+    - id: docformatter
+      args: [
+        -i,
+        --wrap-summaries=120,
+        --wrap-descriptions=120,
+        --pre-summary-newline,
+      ]
+
+- repo: https://github.com/humitos/mirrors-autoflake
+  rev: v1.1
+  hooks:
+    - id: autoflake
+      args: ['--in-place', '--remove-all-unused-imports', '--remove-unused-variable']
+
+- repo: https://github.com/pycqa/isort
+  rev: 5.8.0
+  hooks:
+  - id: isort
+    name: isort (python)
+  - id: isort
+    name: isort (cython)
+    types: [cython]
+  - id: isort
+    name: isort (pyi)
+    types: [pyi]
+
+- repo: https://gitlab.com/pycqa/flake8
+  rev: 3.7.9
+  hooks:
+    - id: flake8
+      additional_dependencies: [
+        'pep8-naming',
+        'flake8-comprehensions',
+        'flake8-bugbear',
+        'flake8-pytest-style',
+        'flake8-variables-names',
+        'flake8-class-attributes-order',
+        'flake8-keyword-arguments',
+        'dlint',
+      ]
+
+- repo: https://github.com/pre-commit/mirrors-mypy
+  rev: v0.770
+  hooks:
+    - id: mypy
+      args: [--ignore-missing-imports, --check-untyped-defs, --disallow-incomplete-defs]
