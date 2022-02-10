@@ -138,7 +138,7 @@ def comparison_plot_estobs(loaded_data):
     )
     axes[1][1].legend(fontsize = "small")
 
-    axes[1][1].set_title("Arc Counts. Using Seed Matrix: " + seedmat,  fontsize="small")
+    axes[1][1].set_title("Arc Counts. Using Seed Vector: " + seedmat,  fontsize="small")
     axes[1][1].set_xlim([0 - 20, max_1])
     axes[1][1].set_ylim([0 - 20, max_1])
     axes[1][1].plot(
