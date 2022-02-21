@@ -174,81 +174,31 @@ def execute_all(
 ) -> None:
     ### Execute experiments related to gradient-based algorithms
     # Set possible options
-    gradient_based_algorithms = [
-        # "spsa",
-        "assignmat"
-    ]
+    # gradient_based_algorithms = [
+    #     "spsa",
+    #     "assignmat"
+    # ]
 
-    for algorithm in gradient_based_algorithms:
-        if algorithm == "spsa":
-            estimator_options = common_estimator_options.copy()
-            estimator_options.update({
-                "gradient_replications": 1,
-                "gradient_design": 1,
-                "perturbation_type": 1,
-            })
-            runner: Callable = \
-                run_spsa_based_travel_demand_estimator
-        elif algorithm == "assignmat":
-            estimator_options = common_estimator_options.copy()
-            runner: Callable = \
-                run_assignment_matrix_based_travel_demand_estimator
-        else:
-            raise ValueError("TODO")
-        for weight_configuration in weight_configurations:
-            estimator_options["weight_configuration"] = weight_configuration
-            if weight_configuration["odmat"] != 0.0:
-                for seedmat in seedmats:
-                    runner(
-                        config_filepath=config_filepath,
-                        scenario_options={"seedmat": seedmat},
-                        simulator_class=SumoMesoSimulationRun,
-                        simulator_options=simulator_options,
-                        estimator_options=estimator_options,
-                        collect_directory=collect_directory,
-                    )
-                    quit()
-            else:
-                seedmat = seedmats[0]
-                runner(
-                    config_filepath=config_filepath,
-                    scenario_options={"seedmat": seedmat},
-                    simulator_class=SumoMesoSimulationRun,
-                    simulator_options=simulator_options,
-                    estimator_options=estimator_options,
-                    collect_directory=collect_directory,
-                )
-                quit()
-
-    ### Execute experiments related to surrogate-based algorithms
-    # Set possible options
-    # surrogate_models = ["fnn", "knn"]
-    # evaluate_output_methods = ["simdata_output"]
-
-    # runner: Callable = run_surrogate_model_based_travel_demand_estimator
-    # for surrogate_model in surrogate_models:
-    #     for evaluate_output_method in evaluate_output_methods:
-    #         for weight_configuration in weight_configurations:
-                
-    #             estimator_options = common_estimator_options.copy()
-    #             estimator_options["weight_configuration"] = weight_configuration
-    #             estimator_options["n_samples"] = estimator_options["max_evals"]
-    #             estimator_options["sample_directory"] = sample_directory
-    #             estimator_options["evaluate_output"] = evaluate_output_method
-    #             estimator_options["method"] = surrogate_model
-    #             if weight_configuration["odmat"] != 0.0:
-    #                 for seedmat in seedmats:
-    #                     runner(
-    #                         config_filepath=config_filepath,
-    #                         scenario_options={"seedmat": seedmat},
-    #                         simulator_class=SumoMesoSimulationRun,
-    #                         simulator_options=simulator_options,
-    #                         estimator_options=estimator_options,
-    #                         collect_directory=collect_directory,
-    #                     )
-    #                     quit()
-    #             else:
-    #                 seedmat = seedmats[0]
+    # for algorithm in gradient_based_algorithms:
+    #     if algorithm == "spsa":
+    #         estimator_options = common_estimator_options.copy()
+    #         estimator_options.update({
+    #             "gradient_replications": 1,
+    #             "gradient_design": 1,
+    #             "perturbation_type": 1,
+    #         })
+    #         runner: Callable = \
+    #             run_spsa_based_travel_demand_estimator
+    #     elif algorithm == "assignmat":
+    #         estimator_options = common_estimator_options.copy()
+    #         runner: Callable = \
+    #             run_assignment_matrix_based_travel_demand_estimator
+    #     else:
+    #         raise ValueError("TODO")
+    #     for weight_configuration in weight_configurations:
+    #         estimator_options["weight_configuration"] = weight_configuration
+    #         if weight_configuration["odmat"] != 0.0:
+    #             for seedmat in seedmats:
     #                 runner(
     #                     config_filepath=config_filepath,
     #                     scenario_options={"seedmat": seedmat},
@@ -258,7 +208,56 @@ def execute_all(
     #                     collect_directory=collect_directory,
     #                 )
     #                 quit()
+    #         else:
+    #             seedmat = seedmats[0]
+    #             runner(
+    #                 config_filepath=config_filepath,
+    #                 scenario_options={"seedmat": seedmat},
+    #                 simulator_class=SumoMesoSimulationRun,
+    #                 simulator_options=simulator_options,
+    #                 estimator_options=estimator_options,
+    #                 collect_directory=collect_directory,
+    #             )
+    #             quit()
 
+    ### Execute experiments related to surrogate-based algorithms
+    # Set possible options
+    # surrogate_models = ["fnn", "knn"]
+    surrogate_models = ["knn"]
+    evaluate_output_methods = ["simdata_output"]
+
+    runner: Callable = run_surrogate_model_based_travel_demand_estimator
+    for surrogate_model in surrogate_models:
+        for evaluate_output_method in evaluate_output_methods:
+            for weight_configuration in weight_configurations:
+                estimator_options = common_estimator_options.copy()
+                estimator_options["weight_configuration"] = weight_configuration
+                estimator_options["n_samples"] = estimator_options["max_evals"]
+                estimator_options["sample_directory"] = sample_directory
+                estimator_options["evaluate_output"] = evaluate_output_method
+                estimator_options["method"] = surrogate_model
+                if weight_configuration["odmat"] != 0.0:
+                    for seedmat in seedmats:
+                        runner(
+                            config_filepath=config_filepath,
+                            scenario_options={"seedmat": seedmat},
+                            simulator_class=SumoMesoSimulationRun,
+                            simulator_options=simulator_options,
+                            estimator_options=estimator_options,
+                            collect_directory=collect_directory,
+                        )
+                        quit()
+                else:
+                    seedmat = seedmats[0]
+                    runner(
+                        config_filepath=config_filepath,
+                        scenario_options={"seedmat": seedmat},
+                        simulator_class=SumoMesoSimulationRun,
+                        simulator_options=simulator_options,
+                        estimator_options=estimator_options,
+                        collect_directory=collect_directory,
+                    )
+                    quit()
 
 def generate_scenario(
     scenario_dict: Dict[str, Any],
@@ -276,6 +275,53 @@ def generate_scenario(
         network_directory=network_directory,
     )
 
+
+def train_models(
+    config_filepath: str,
+    sample_directory: str,
+    simulator_options: Dict[str, Any],
+    common_estimator_options: Dict[str, Any],
+    weight_configurations: List[Dict[str, Any]],
+    seedmats: List[str],
+    collect_directory: str,
+    sample_config: List[int],
+):
+    surrogate_models = ["knn"]
+    evaluate_output_methods = ["simdata_output"]
+
+    runner: Callable = run_surrogate_model_based_travel_demand_estimator
+    for surrogate_model in surrogate_models:
+        for evaluate_output_method in evaluate_output_methods:
+            for weight_configuration in weight_configurations:
+                for n_samples in sample_config:                
+                    estimator_options = common_estimator_options.copy()
+                    estimator_options["weight_configuration"] = weight_configuration
+                    estimator_options["n_samples"] = n_samples
+                    estimator_options["sample_directory"] = sample_directory
+                    estimator_options["evaluate_output"] = evaluate_output_method
+                    estimator_options["method"] = surrogate_model
+                    if weight_configuration["odmat"] != 0.0:
+                        for seedmat in seedmats:
+                            runner(
+                                config_filepath=config_filepath,
+                                scenario_options={"seedmat": seedmat},
+                                simulator_class=SumoMesoSimulationRun,
+                                simulator_options=simulator_options,
+                                estimator_options=estimator_options,
+                                collect_directory=collect_directory,
+                            )
+                            quit()
+                    else:
+                        seedmat = seedmats[0]
+                        runner(
+                            config_filepath=config_filepath,
+                            scenario_options={"seedmat": seedmat},
+                            simulator_class=SumoMesoSimulationRun,
+                            simulator_options=simulator_options,
+                            estimator_options=estimator_options,
+                            collect_directory=collect_directory,
+                        )
+                        quit()
 
 if "__main__" == __name__:
     print("\nExecuting...\n")
@@ -299,13 +345,14 @@ if "__main__" == __name__:
     }
 
     config_filepath = "static/_09fe330b-397c-458e-9dbc-ae0c1f3c51cd/config.json"
-    sample_directory = "static/_8a80589f-6047-478b-a703-30d723c66854"
+    sample_directory = "static/_8c5129e3-9f38-433e-951f-13a89adf774f"
 
     # Define which steps should be executed:
     steps = [
         # "generate_network",
         # "generate_scenario",
-        "generate_samples",
+        # "generate_samples",
+        "train_models",
         # "execute_all",
     ]
     if "generate_network" in steps:
@@ -368,6 +415,19 @@ if "__main__" == __name__:
             simulator_class=SumoMesoSimulationRun,
             simulator_options=simulator_options,
             estimator_options=estimator_options,
+        )
+    if "train_models" in steps:
+        # Generate samples for the surrogate model based approach 
+        seedmat = seedmats[0]
+        estimator_options = common_estimator_options.copy()
+        train_models(
+            config_filepath=config_filepath,
+            scenario_options={"seedmat": seedmat},
+            simulator_class=SumoMesoSimulationRun,
+            simulator_options=simulator_options,
+            estimator_options=estimator_options,
+            # Train models using 200 samples...
+            sample_config=[200],
         )
     if "execute_all" in steps:
         execute_all(
