@@ -174,7 +174,10 @@ def execute_all(
 ) -> None:
     ### Execute experiments related to gradient-based algorithms
     # Set possible options
-    gradient_based_algorithms = ["spsa", "assignmat"]
+    gradient_based_algorithms = [
+        # "spsa",
+        "assignmat"
+    ]
 
     for algorithm in gradient_based_algorithms:
         if algorithm == "spsa":
@@ -291,6 +294,7 @@ if "__main__" == __name__:
     ]
     common_estimator_options = {
         "max_evals": 200,
+        # "max_evals": 5,
         "stopping_criteria": ["max_evals"],
     }
 
@@ -301,8 +305,8 @@ if "__main__" == __name__:
     steps = [
         # "generate_network",
         # "generate_scenario",
-        # "generate_samples",
-        "execute_all",
+        "generate_samples",
+        # "execute_all",
     ]
     if "generate_network" in steps:
         network_data = networks.GridNetwork(
@@ -373,6 +377,6 @@ if "__main__" == __name__:
             common_estimator_options=common_estimator_options,
             weight_configurations=weight_configurations,
             seedmats=seedmats,
-            collect_directory="run05",
+            collect_directory="run01",
         )
     print("\nExiting...\n")

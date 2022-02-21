@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 2022-02-21 11:06:15 by Eclipse SUMO sumo Version 1.10.0
+-->
+
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
+
+    <input>
+        <net-file value="../../../../input_files/network/sumo-grid-network-od132.net.xml"/>
+        <route-files value="trips_014.rou.xml"/>
+        <additional-files value="dua_dump_014.add.xml"/>
+    </input>
+
+    <output>
+        <vehroute-output value="vehRoutes.veh.xml"/>
+        <vehroute-output.exit-times value="true"/>
+        <vehroute-output.last-route value="true"/>
+        <vehroute-output.sorted value="true"/>
+        <vehroute-output.write-unfinished value="true"/>
+    </output>
+
+    <time>
+        <begin value="0.0"/>
+        <end value="4500.0"/>
+    </time>
+
+    <processing>
+        <route-steps value="200"/>
+        <no-internal-links value="false"/>
+        <time-to-teleport value="4500.0"/>
+        <time-to-teleport.highways value="0"/>
+        <max-depart-delay value="4500"/>
+        <eager-insert value="false"/>
+        <default.speeddev value="0"/>
+    </processing>
+
+    <report>
+        <verbose value="true"/>
+        <xml-validation value="never"/>
+        <no-warnings value="false"/>
+        <log value="iteration_014.sumo.log"/>
+        <no-step-log value="true"/>
+    </report>
+
+    <mesoscopic>
+        <mesosim value="true"/>
+        <meso-junction-control value="true"/>
+        <meso-recheck value="0"/>
+    </mesoscopic>
+
+    <random_number>
+        <random value="false"/>
+    </random_number>
+
+</configuration>

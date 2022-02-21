@@ -2796,6 +2796,7 @@ class SPSABasedTravelDemandEstimator(GradientBasedTravelDemandEstimator):
                 # Add the computational time used in each step of the applied
                 # estimation method
                 "timing": {
+                    # Save the (wall) time 
                     "wall_time": [extra_data["wall_time"]],
                     # Save the (system + user) time 
                     "sysusr_time": [extra_data["sysusr_time"]],
@@ -2856,7 +2857,8 @@ class SPSABasedTravelDemandEstimator(GradientBasedTravelDemandEstimator):
                         x_vec=x_vec,
                         extra_data={
                             "of_values": of_values,
-                            # NOTE: Fix perturbation parameter for SUMO input
+                            # NOTE: Fix perturbation parameter to 1 to be 
+                            #       compatible with SUMO
                             "c_k": 1.0,
                             "a_k": a_k,
                         },
@@ -2877,9 +2879,10 @@ class SPSABasedTravelDemandEstimator(GradientBasedTravelDemandEstimator):
                 end_wall = time.time()
                 if collect_final_output:
                     extra_data.update({
-                        # Save the (wall) time
+                        # Save the (wall) time for the complete algorithm run
                         "wall_time": end_wall - start_wall,
-                        # Save the (system + user) time 
+                        # Save the (system + user) time for the complete 
+                        # algorithm run
                         "sysusr_time": end_sysusr - start_sysusr,
                     })
                     self.collect_final_output(
@@ -3128,99 +3131,102 @@ class SPSABasedTravelDemandEstimator(GradientBasedTravelDemandEstimator):
         """
         of = extra_data["of_values"]
         c_k = extra_data["c_k"]
-        # Fetch some required and optional settings
-        weight: Dict[str, float] = self._estimator_options.get_value(
-            "weight_configuration"
-        )
+        if self._estimator_options is not None:
+            # Fetch some required and optional settings
+            weight: Dict[str, float] = self._estimator_options.get_value(
+                "weight_configuration"
+            )
 
-        gradient_design = self._estimator_options.get_value("gradient_design")
-        perturbation_type = self._estimator_options.get_value(
-            "perturbation_type"
-        )
-        gradient_replications = self._estimator_options.get_value(
-            "gradient_replications"
-        )
-        vec_size = self._estimator_options.get_value("x0_size")
-        # Instantiate a vector that is going to hold the gradient estimate
-        ghat_terms = np.zeros(
-            shape=(vec_size, 1),
-            dtype=float,
-        )
-        # Estimate the gradient at the current approximate solution:
-        for i in range(gradient_replications):
-            # Perturbation vector type:
-            #   1. Random perturbations
-            if perturbation_type == 1:
-                delta = self.bernoulli_perturbation()
-            #   2. Deterministic perturbations
-            elif perturbation_type == 2:
-                delta = self.hadamard_perturbation()
-            #   3. Coordinate perturbations (equivalent to using the FDSA algorithm)
-            elif perturbation_type == 3:
-                # Generate the i'th unit vector
-                delta = self.coordinate_perturbation(int(i))
-            else:
-                raise ValueError("TODO")
-            # Approximate the gradient using a one-sided finite difference approximation
-            if gradient_design == 1:
-                of_m = self.gradient_design_1(x_vec, c_k, delta)
-            # Approximate the gradient using a two-sided finite difference approximation
-            elif gradient_design == 2:
-                of_m, of_p = self.gradient_design_2(x_vec, c_k, delta)
-            else:
-                raise ValueError("TODO")
-            
-            # TODO: Hardcoded for now, but would be better if more general
-            if weight["odmat"] > 0:
-                ghat_terms[:, 0] += weight["odmat"] * self._gradient_odmat(
-                    odmat=x_vec
-                )
+            gradient_design = self._estimator_options.get_value("gradient_design")
+            perturbation_type = self._estimator_options.get_value(
+                "perturbation_type"
+            )
+            gradient_replications = self._estimator_options.get_value(
+                "gradient_replications"
+            )
+            vec_size = self._estimator_options.get_value("x0_size")
+            # Instantiate a vector that is going to hold the gradient estimate
+            ghat_terms = np.zeros(
+                shape=(vec_size, 1),
+                dtype=float,
+            )
+            # Estimate the gradient at the current approximate solution:
+            for i in range(gradient_replications):
+                # Perturbation vector type:
+                #   1. Random perturbations
+                if perturbation_type == 1:
+                    delta = self.bernoulli_perturbation()
+                #   2. Deterministic perturbations
+                elif perturbation_type == 2:
+                    delta = self.hadamard_perturbation()
+                #   3. Coordinate perturbations (equivalent to using the FDSA algorithm)
+                elif perturbation_type == 3:
+                    # Generate the i'th unit vector
+                    delta = self.coordinate_perturbation(int(i))
+                else:
+                    raise ValueError("TODO")
+                # Approximate the gradient using a one-sided finite difference approximation
+                if gradient_design == 1:
+                    of_m = self.gradient_design_1(x_vec, c_k, delta)
+                # Approximate the gradient using a two-sided finite difference approximation
+                elif gradient_design == 2:
+                    of_m, of_p = self.gradient_design_2(x_vec, c_k, delta)
+                else:
+                    raise ValueError("TODO")
+                
+                # TODO: Hardcoded for now, but would be better if more general
+                if weight["odmat"] > 0:
+                    ghat_terms[:, 0] += weight["odmat"] * self._gradient_odmat(
+                        odmat=x_vec
+                    )
 
-            # Approximate the gradient
-            if gradient_design == 1 and perturbation_type in [1, 2]:
-                # _of_m = self._sum_of_values(of_values=of_m)
-                # _of = self._sum_of_values(of_values=of)
-                # TODO: Hardcoded for now, but would be better if more general
-                _of_m = of_m["counts"][0] * of_m["counts"][1]
-                _of = of["counts"][0] * of["counts"][1]
-                ghat_terms[:, 0] += (_of - _of_m) / (c_k * delta)
-            elif gradient_design == 2 and perturbation_type in [1, 2]:
-                # _of_m = self._sum_of_values(of_values=of_m)
-                # _of_p = self._sum_of_values(of_values=of_p)
-                # TODO: Hardcoded for now, but would be better if more general
-                _of_m = of_m["counts"][0] * of_m["counts"][1]
-                _of_p = of_p["counts"][0] * of_p["counts"][1]
-                ghat_terms[:, 0] += (_of_p - _of_m) / (2.0 * c_k * delta)
-            elif gradient_design == 1 and perturbation_type in [3]:
-                # _of_m = self._sum_of_values(of_values=of_m)
-                # _of = self._sum_of_values(of_values=of)
-                # TODO: Hardcoded for now, but would be better if more general
-                _of_m = of_m["counts"][0] * of_m["counts"][1]
-                _of = of["counts"][0] * of["counts"][1]
-                ghat_terms[:, 0] += (_of - _of_m) / (c_k * delta[i])
-            elif gradient_design == 2 and perturbation_type in [3]:
-                # _of_m = self._sum_of_values(of_values=of_m)
-                # _of_p = self._sum_of_values(of_values=of_p)
-                # TODO: Hardcoded for now, but would be better if more general
-                _of_m = of_m["counts"][0] * of_m["counts"][1]
-                _of_p = of_p["counts"][0] * of_p["counts"][1]
-                ghat_terms[:, 0] += (_of_p - _of_m) / (2.0 * c_k * delta[i])
-            else:
-                # Otherwise raise error
-                raise ValueError(
-                    "Gradient design and perturbation type wrongly specified"
-                )
-        ghat = np.zeros(
-            shape=(vec_size,),
-            dtype=float,
-        )
-        # Calculate the mean of the gradient replications
-        if gradient_design in [1, 2] and perturbation_type in [1, 2]:
-            ghat_terms[:, 0] /= gradient_replications
-        ghat += ghat_terms[:, 0]
-        # Calculate the magnitude
-        magnitude = np.linalg.norm(ghat)
-        return ghat, magnitude
+                # Approximate the gradient
+                if gradient_design == 1 and perturbation_type in [1, 2]:
+                    # _of_m = self._sum_of_values(of_values=of_m)
+                    # _of = self._sum_of_values(of_values=of)
+                    # TODO: Hardcoded for now, but would be better if more general
+                    _of_m = of_m["counts"][0] * of_m["counts"][1]
+                    _of = of["counts"][0] * of["counts"][1]
+                    ghat_terms[:, 0] += (_of - _of_m) / (c_k * delta)
+                elif gradient_design == 2 and perturbation_type in [1, 2]:
+                    # _of_m = self._sum_of_values(of_values=of_m)
+                    # _of_p = self._sum_of_values(of_values=of_p)
+                    # TODO: Hardcoded for now, but would be better if more general
+                    _of_m = of_m["counts"][0] * of_m["counts"][1]
+                    _of_p = of_p["counts"][0] * of_p["counts"][1]
+                    ghat_terms[:, 0] += (_of_p - _of_m) / (2.0 * c_k * delta)
+                elif gradient_design == 1 and perturbation_type in [3]:
+                    # _of_m = self._sum_of_values(of_values=of_m)
+                    # _of = self._sum_of_values(of_values=of)
+                    # TODO: Hardcoded for now, but would be better if more general
+                    _of_m = of_m["counts"][0] * of_m["counts"][1]
+                    _of = of["counts"][0] * of["counts"][1]
+                    ghat_terms[:, 0] += (_of - _of_m) / (c_k * delta[i])
+                elif gradient_design == 2 and perturbation_type in [3]:
+                    # _of_m = self._sum_of_values(of_values=of_m)
+                    # _of_p = self._sum_of_values(of_values=of_p)
+                    # TODO: Hardcoded for now, but would be better if more general
+                    _of_m = of_m["counts"][0] * of_m["counts"][1]
+                    _of_p = of_p["counts"][0] * of_p["counts"][1]
+                    ghat_terms[:, 0] += (_of_p - _of_m) / (2.0 * c_k * delta[i])
+                else:
+                    # Otherwise raise error
+                    raise ValueError(
+                        "Gradient design and perturbation type wrongly specified"
+                    )
+            ghat = np.zeros(
+                shape=(vec_size,),
+                dtype=float,
+            )
+            # Calculate the mean of the gradient replications
+            if gradient_design in [1, 2] and perturbation_type in [1, 2]:
+                ghat_terms[:, 0] /= gradient_replications
+            ghat += ghat_terms[:, 0]
+            # Calculate the magnitude
+            magnitude = np.linalg.norm(ghat)
+            return ghat, magnitude
+        else:
+            raise ValueError("TODO")
 
     def gradient_design_1(
         self,
@@ -4076,12 +4082,13 @@ class SampleGenerator(BaseDataOrganizer):
         n_samples: int,
         start_counter: int = 0
         ) -> None:
+        sysusr_times = []
+        wall_times = []
+
         # Check if sample metadata already exists and determine if a new 
         # batch of samples should be generated or new samples should be added
         # to an existing batch of already generated samples
         self._sample_metadata_exists()
-        start_sysusr = time.process_time()
-        start_wall = time.time()
 
         x_vec = ut.generate_constant_demand_vector(
             scenario_data=self.scenario_data,
@@ -4091,18 +4098,20 @@ class SampleGenerator(BaseDataOrganizer):
             scenario_data=self.scenario_data,
             demand_vec=x_vec,
         )
-        start_counter = start_counter
         self.n_samples = n_samples + start_counter
 
         if start_counter > 0:
             self.file_io.directory_counter = start_counter
             self.file_io.save()
         while start_counter <= self.n_samples:
+            start_sysusr = time.process_time()
+            start_wall = time.time()
+
             # Write out the current progress
-            # TODO: Logging.info
+            # TODO: Use 'logging.info' to easier be able to set msg verbosity
             print(
-                f"Sampling counter: {start_counter} remaining samples: \
-                {self.n_samples - start_counter}\n"
+                f"\nSampling counter: {start_counter}. Remaining samples: " + \
+                f"{self.n_samples - start_counter}\n"
             )
             v = sobol_sequence.sample(start_counter + 1, self.shape)
             scale_samples(v, problem={"bounds": self.bounds})
@@ -4110,16 +4119,18 @@ class SampleGenerator(BaseDataOrganizer):
             x_vec["value"] = v[-1]
             self.run_simulator(x_vec=x_vec)
             start_counter += 1
-        end_sysusr = time.process_time()
-        end_wall = time.time()
+            end_sysusr = time.process_time()
+            end_wall = time.time()
+            sysusr_times.append(end_sysusr - start_sysusr)
+            wall_times.append(end_wall - start_wall)
 
         _dict = {
             "start_counter": start_counter,
             "n_samples": self.n_samples,
             # Save the (wall) time
-            "wall_time": end_wall - start_wall,
+            "wall_time": wall_times,
             # Save the (system + user) time 
-            "sysusr_time": end_sysusr - start_sysusr,
+            "sysusr_time": sysusr_times,
         }
         self.collect_sample_metadata(output=_dict)
 
@@ -4192,7 +4203,12 @@ class SurrogateModelBasedTravelDemandEstimator(BaseTravelDemandEstimator):
             ]
         )
 
-        self.surrogate_model = None
+        # Create class variable for storing the surrogate model
+        self.surrogate_model: Union[None, Callable] = None
+
+        # Create empty list eventually used for storing the objective function
+        # value history when optimizing on the surrogate model
+        self.fval_history: List[float] = []
         # Internal use only to avoid repeated copying
         self.__copy_true_odmat = self.true_odmat.copy()
         self.__copy_true_simdata = self.true_simdata.copy()
@@ -4688,7 +4704,9 @@ class SurrogateModelBasedTravelDemandEstimator(BaseTravelDemandEstimator):
                 simdata=self.__copy_true_simdata,
                 assignmat=None,
             )
-            return self._sum_of_values(of_values=of_values) 
+            fval = self._sum_of_values(of_values=of_values)
+            self.fval_history.append(fval)
+            return fval
         else:
             raise ValueError("TODO")
 
@@ -4708,7 +4726,9 @@ class SurrogateModelBasedTravelDemandEstimator(BaseTravelDemandEstimator):
                 of_value = of_value.ravel()[0]
                 val_simdata = {"simdata": (weight["counts"], of_value)}
                 of_values.update(val_simdata)
-                return self._sum_of_values(of_values=of_values)
+                fval = self._sum_of_values(of_values=of_values)
+                self.fval_history.append(fval)
+                return fval
             else:
                 raise ValueError("TODO")
         else:
@@ -4742,35 +4762,41 @@ class SurrogateModelBasedTravelDemandEstimator(BaseTravelDemandEstimator):
         atol=0.001,
         tol=0.001,
         ) -> OptimizeResult:
-        max_evals = self._estimator_options.get_value("max_evals")
-        v = sobol_sequence.sample(max_evals, self.shape)
-        scale_samples(v, problem={"bounds": self.bounds})
-        # Unpack nested array
-        new_sample = v[-1]
-        minimizer_kwargs = {
-            # "method": "COBYLA",
-            "method": "SLSQP",
-            "tol": 0.10,
-            "constraints":  {
-                "type": "eq",
-                "fun": self.gencon_penalty
-            },
-        }
-        # minimizer_kwargs = {
-        #     "method": "L-BFGS-B",
-        #     "bounds": self.bounds,
-        #     "tol": 0.001,
-        # }
-        result = basinhopping(
-            func=func,
-            x0=new_sample,
-            # niter=200,
-            niter=5,
-            T=0.10,
-            stepsize=1.0,
-            minimizer_kwargs=minimizer_kwargs,
-        )
-        return result
+        if self._estimator_options is not None:
+            max_evals = self._estimator_options.get_value("max_evals")
+            v = sobol_sequence.sample(max_evals, self.shape)
+            scale_samples(v, problem={"bounds": self.bounds})
+            # Unpack nested array
+            new_sample = v[-1]
+            minimizer_kwargs = {
+                # "method": "COBYLA",
+                "method": "SLSQP",
+                "tol": 0.10,
+                "constraints":  {
+                    "type": "eq",
+                    "fun": self.gencon_penalty
+                },
+            }
+            # minimizer_kwargs = {
+            #     "method": "L-BFGS-B",
+            #     "bounds": self.bounds,
+            #     "tol": 0.001,
+            # }
+            result = basinhopping(
+                func=func,
+                x0=new_sample,
+                # niter=200,
+                # niter=5,
+                niter=50,
+                # T=0.10,
+                # stepsize=1.0,
+                minimizer_kwargs=minimizer_kwargs,
+                seed=self._estimator_options.get_value("random_seed"),
+            )
+            return result
+        else:
+            raise ValueError("TODO")
+
         # if self._estimator_options is not None:
         #     result = differential_evolution(
         #         func=func,
