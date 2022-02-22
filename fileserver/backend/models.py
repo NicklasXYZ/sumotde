@@ -2780,7 +2780,7 @@ class SPSABasedTravelDemandEstimator(GradientBasedTravelDemandEstimator):
             output = {
                 "experiment_metadata": {
                     "method": {
-                        "estimator": "assignmat",
+                        "estimator": "gradient-spsa",
                         "estimator_options": self._estimator_options.get_options(),
                     },
                     "seedmatrix": seedmat,
@@ -3899,7 +3899,7 @@ class AssignmentMatrixBasedTravelDemandEstimator(
             output = {
                 "experiment_metadata": {
                     "method": {
-                        "estimator": "assignmat",
+                        "estimator": "gradient-assignmat",
                         "estimator_options": self._estimator_options.get_options(),
                     },
                     "seedmatrix": seedmat,
@@ -4085,6 +4085,9 @@ class SampleGenerator(BaseDataOrganizer):
         sysusr_times = []
         wall_times = []
 
+        # First sample count value
+        start = start_counter 
+
         # Check if sample metadata already exists and determine if a new 
         # batch of samples should be generated or new samples should be added
         # to an existing batch of already generated samples
@@ -4118,15 +4121,19 @@ class SampleGenerator(BaseDataOrganizer):
             # Unpack nested array
             x_vec["value"] = v[-1]
             self.run_simulator(x_vec=x_vec)
-            start_counter += 1
             end_sysusr = time.process_time()
             end_wall = time.time()
             sysusr_times.append(end_sysusr - start_sysusr)
             wall_times.append(end_wall - start_wall)
+            start_counter += 1
+        
+        # Last sample count value
+        end = start_counter
 
         _dict = {
-            "start_counter": start_counter,
-            "n_samples": self.n_samples,
+            "start_counter": start,
+            "end_counter": end,
+            "n_samples": self.n_samples + 1,
             # Save the (wall) time
             "wall_time": wall_times,
             # Save the (system + user) time 
@@ -4221,235 +4228,243 @@ class SurrogateModelBasedTravelDemandEstimator(BaseTravelDemandEstimator):
     def set_surrogate_model(self, filename:str):
         return self.load_model(filename=filename)
 
-    def collect_final_output_training(self):
-        pass
+    def collect_final_output_training_step(
+        self,
+        extra_data: Dict[str, Any],
+        n_samples: int,
+        ) -> None:
+        if (self.models is not None) and \
+            (self.estimation_task is not None) and \
+            (self._estimator_options is not None) and \
+            (self.surrogate_model is not None):
 
+            # Fecth latest estimation task db object
+            estimation_task = self.models["EstimationTask"].objects.get(
+                uid=str(self.estimation_task.uid)
+            )
 
-    # def collect_final_output_optimization(
-    #     self,
-    #     x_vec: pd.DataFrame,
-    #     extra_data: Dict[str, Any],
-    #     ) -> None:
-    #     if (self.models is not None) and \
-    #         (self.estimation_task is not None) and \
-    #         (self._estimator_options is not None):
+            evaluate_output = self._estimator_options.get_value(
+                "evaluate_output"
+            )
+            method = self._estimator_options.get_value("method")
+            output_filename = self.generate_model_filename(
+                method=method,
+                map_type=evaluate_output.replace("_", "-"),
+                n_samples=n_samples,
+            )
+            output = {
+                "training_metadata": {
+                    "method": {
+                        "estimator": output_filename,
+                        "estimator_options": \
+                            self._estimator_options.get_options(),
+                    },
+                },
+                # The history of objective function values
+                # associated with the read sample data
+                "of_history": [
+                    # Make sure numerical weight values are replaced with
+                    # None. At this point we do not know the experiment that
+                    # needs to be executed. We thus do not know the correct 
+                    # weights that needs to be saved. 
+                    {key: [None, of_eval.of[key][1]] for key in of_eval.of}
+                    for of_eval in estimation_task.of_evals.all()
+                ],
+                "n_samples": n_samples,
+                "best_cv_score": self.surrogate_model.best_score_,
+                # Add the computational time used in each step of the applied
+                # estimation method
+                "timing": {
+                    "run": {
+                        "wall_time": [
+                            *extra_data["run"]["wall_time"]
+                        ],
+                        "sysusr_time": [
+                            *extra_data["run"]["sysusr_time"]
+                        ],
+                    },
+                    "training": {
+                        "wall_time": [
+                            *extra_data["training"]["wall_time"]
+                        ],
+                        "sysusr_time": [
+                            *extra_data["training"]["sysusr_time"]
+                        ],
+                    } ,
+                    "optimization": {
+                        "wall_time": [
+                            *extra_data["optimization"]["wall_time"]
+                        ],
+                        "sysusr_time": [
+                            *extra_data["optimization"]["sysusr_time"]
+                        ],
+                    }
+                },
+            }
+            # Save the training metadata together with the serialized model data
+            model_filepath = self.get_model_filepath(filename="")
+            output_filepath = os.path.join(
+                model_filepath,
+                f"{output_filename}_training-metadata.json",
+            )
+            with open(output_filepath, mode="w") as file_object:
+                json.dump(output, file_object, indent=4, sort_keys=True)
+        else:
+            raise ValueError("TODO")
 
-    #         # Extract the sample data metadata and add it to the final 
-    #         # output data obtained from the surrogate model experiment
+    def collect_final_output_optimization_step(
+        self,
+        x_vec: pd.DataFrame,
+        grid_search_metadata: pd.DataFrame,
+        training_metadata: Dict[str, Any],
+        extra_data: Dict[str, Any],
+        ) -> None:
+        if (self.models is not None) and \
+            (self.estimation_task is not None) and \
+            (self._estimator_options is not None):
 
-    #         # TODO: Set filename globally, so it can be used consistently 
-    #         # throughout the file
-    #         sample_metadata_filename = "sample_metadata"
-    #         output_filepath = os.path.join(
-    #             self.file_io.root_output_directory,
-    #             f"{sample_metadata_filename}.json",
-    #         )
-    #         # Set defaults
-    #         sample_metadata = {"wall_time": 0.0, "sysusr_time": 0.0}
-    #         if os.path.exists(output_filepath):
-    #             with open(output_filepath, mode="r") as file_object:
-    #                 sample_metadata = json.load(file_object)
+            # Extract the sample data metadata and add it to the final 
+            # output data obtained from the surrogate model experiment
 
-    #         else:
-    #             print(
-    #                 f"Sample metadata '.json' file {sample_metadata_filename} \
-    #                 does not exist!"
-    #             )
+            # TODO: Set filename globally, so it can be used consistently 
+            # throughout the file
+            sample_metadata_filename = "sample_metadata"
+    
+            filepath = self.get_model_filepath(filename="")
+            output_filepath = os.path.join(
+                filepath,
+                # self.file_io.root_output_directory,
+                f"{sample_metadata_filename}.json",
+            )
+            # Set defaults
+            # sample_metadata = {"wall_time": 0.0, "sysusr_time": 0.0}
 
-    #         # Fecth latest estimation task db object
-    #         estimation_task = self.models["EstimationTask"].objects.get(
-    #             uid=str(self.estimation_task.uid)
-    #         )
-    #         weight: Dict[str, float] = self._estimator_options.get_value(
-    #             "weight_configuration"
-    #         )
+            if os.path.exists(output_filepath):
+                with open(output_filepath, mode="r") as file_object:
+                    sample_metadata = json.load(file_object)
 
-    #         try:
-    #             if weight["odmat"] <= 0.0:
-    #                 seedmat = None
-    #             else:
-    #                 seedmat = self._scenario_options.get_value("seedmat")
-    #         except KeyError:
-    #             seedmat = None
+            else:
+                print(
+                    f"Sample metadata '.json' file {sample_metadata_filename} \
+                    does not exist!"
+                )
+                raise ValueError("TODO")
 
-    #         simdata = extra_data["simdata"]
-    #         merged_simdata = self.true_simdata.merge(
-    #             simdata,
-    #             on=["link", "begin", "end"],
-    #             how="outer",
-    #         )
-    #         merged_odmat = self.true_odmat.merge(
-    #             x_vec,
-    #             on=["begin", "end", "from", "to"],
-    #             how="outer",
-    #         )
+            # Fecth latest estimation task db object
+            estimation_task = self.models["EstimationTask"].objects.get(
+                uid=str(self.estimation_task.uid)
+            )
+            weight: Dict[str, float] = self._estimator_options.get_value(
+                "weight_configuration"
+            )
 
-    #         evaluate_output = self._estimator_options.get_value(
-    #             "evaluate_output"
-    #         )
-    #         method = self._estimator_options.get_value("method")
-    #         output_filename = f"surrogate-{method}-{evaluate_output}_{seedmat}"
-    #         output = {
-    #             "experiment_metadata": {
-    #                 "method": {
-    #                     "estimator": "assignmat",
-    #                     "estimator_options": self._estimator_options.get_options(),
-    #                 },
-    #                 "seedmatrix": seedmat,
-    #             },
-    #             # Estimated and observed demands
-    #             "merged_odmat": merged_odmat.to_json(),
-    #             # Estimated and oberved quantities
-    #             "merged_simdata": merged_simdata.to_json(),
-    #             # The history of objective function values
-    #             "of_history": [
-    #                 of_eval.of for of_eval in estimation_task.of_evals.all()
-    #             ],
-    #             # The history of objective function values when optimizing on the
-    #             # surrogate model
-    #             "surrogate_of_history": self.fval_history,
-    #             # Add the computational time used in each step of the applied
-    #             # estimation method
-    #             "timing": {
-    #                 "run": {
-    #                     "wall_time": [*extra_data["run"]["wall_time"]],
-    #                     "sysusr_time": [*extra_data["run"]["sysusr_time"]],
-    #                 },
-    #                 "training": {
-    #                     "wall_time": [*extra_data["training"]["wall_time"]],
-    #                     "sysusr_time": [*extra_data["training"]["sysusr_time"]],
-    #                 } ,
-    #                 "optimization": {
-    #                     "wall_time": [*extra_data["optimization"]["wall_time"]],
-    #                     "sysusr_time": [*extra_data["optimization"]["sysusr_time"]],
-    #                 }
-    #             },
-    #         }
-    #         output_filepath = os.path.join(
-    #             self.collect_directory,
-    #             f"{output_filename}.json",
-    #         )
-    #         with open(output_filepath, mode="w") as file_object:
-    #             json.dump(output, file_object, indent=4, sort_keys=True)
-    #     else:
-    #         raise ValueError("TODO")
+            try:
+                if weight["odmat"] <= 0.0:
+                    seedmat = None
+                else:
+                    seedmat = self._scenario_options.get_value("seedmat")
+            except KeyError:
+                seedmat = None
 
-    # def run(
-    #     self, 
-    #     x_vec: pd.DataFrame,
-    #     collect_final_output: bool = False,
-    #     train_only: bool = True,
-    #     ) -> Tuple[Dict[str, Tuple[float, float]], pd.DataFrame]:
-    #     if self._estimator_options is not None:
-    #         np.random.seed(
-    #             self._estimator_options.get_value("random_seed")
-    #         )
-    #         evaluate_output = self._estimator_options.get_value(
-    #             "evaluate_output"
-    #         )
-    #         method = self._estimator_options.get_value("method")
-    #         data = self.extract_data()
+            simdata = extra_data["simdata"]
+            merged_simdata = self.true_simdata.merge(
+                simdata,
+                on=["link", "begin", "end"],
+                how="outer",
+            )
+            merged_odmat = self.true_odmat.merge(
+                x_vec,
+                on=["begin", "end", "from", "to"],
+                how="outer",
+            )
 
-    #         train_start_sysusr = None; train_end_sysusr = None
-    #         train_start_wall = None; train_end_wall = None
-    #         if method == "knn":
-    #             print(
-    #                 f"Training a new '{method}:{evaluate_output}' model..."
-    #             )
-    #             self.surrogate_model, _ = self.set_surrogate_model(
-    #                 filename=f"{method}_{evaluate_output}",
-    #             )
-    #             # If no existing model was loaded, then train a new one
-    #             if self.surrogate_model is None:
-    #                 train_start_sysusr = time.process_time()
-    #                 train_start_wall = time.time()
-    #                 self.surrogate_model = self.train_knn(
-    #                     data=data,
-    #                     evaluate_output=evaluate_output,
-    #                 )
-    #                 train_end_sysusr = time.process_time()
-    #                 train_end_wall = time.time()
-    #             else:
-    #                 print(
-    #                     f"An existing '{method}:{evaluate_output}' model was \
-    #                     loaded..."
-    #                 )
-    #         elif method == "fnn":
-    #             self.surrogate_model, _ = self.set_surrogate_model(
-    #                 filename=f"{method}_{evaluate_output}",
-    #             )
-    #             if self.surrogate_model is None:
-    #                 print(
-    #                     f"Training a new '{method}:{evaluate_output}' model..."
-    #                 )
-    #                 train_start_sysusr = time.process_time()
-    #                 train_start_wall = time.time()
-    #                 self.surrogate_model = self.train_fnn(
-    #                     data=data,
-    #                     evaluate_output=evaluate_output,
-    #                 )
-    #                 train_end_sysusr = time.process_time()
-    #                 train_end_wall = time.time()
-    #             else:
-    #                 print(
-    #                     f"An existing '{method}:{evaluate_output}' model was \
-    #                     loaded..."
-    #                 )
-    #         else:
-    #             raise ValueError("TODO")
-    #         optimize_start_sysusr = time.process_time() 
-    #         optimize_start_wall = time.time() 
+            evaluate_output = self._estimator_options.get_value(
+                "evaluate_output"
+            )
+            method = self._estimator_options.get_value("method")
+
+            # Extract sample metadata
+            run_time_sysusr = np.sum(sample_metadata["sysusr_time"])
+            run_time_wall = np.sum(sample_metadata["wall_time"])
+            print("run_time_sysusr (sec): ", run_time_sysusr)
+            print("run_time_wall   (sec): ", run_time_wall)
+
+            # Extract training metadata
+            n_samples = training_metadata["n_samples"]
+            training_time_sysusr = \
+                training_metadata["timing"]["training"]["sysusr_time"]
+            training_time_wall = \
+                training_metadata["timing"]["training"]["wall_time"]
+            best_cv_score = training_metadata["best_cv_score"]
             
-    #         if evaluate_output == "simdata_output":
-    #             # Evaluate surrogate model modelling simulation output
-    #             func = self._evaluate_model_predict_counts
-    #         elif evaluate_output == "of_output":
-    #             # Evaluate surrogate model modelling objective function output
-    #             func = self._evaluate_model_predict_of
-    #         else:
-    #             raise ValueError("TODO")
-    #         optimize_end_sysusr = time.process_time()
-    #         optimize_end_wall = time.time()
+            output_filename = self.generate_model_filename(
+                method=method,
+                map_type=evaluate_output.replace("_", "-"),
+                n_samples=n_samples,
+            )
 
-    #         optimize_time_sysusr = optimize_end_sysusr - optimize_start_sysusr
-    #         optimize_time_wall = optimize_end_wall - optimize_start_wall
-            
-    #         # Find minimum of surrogate model and evaluate it with sumo 
-    #         of_values, x_vec, extra_data = self.optimize(func=func)
-
-    #         if collect_final_output:
-    #             if train_start_sysusr is None:
-    #                 train_time_sysusr = train_end_sysusr - train_start_sysusr 
-    #             if train_start_wall is None:
-    #                 train_time_wall = train_end_wall - train_start_wall
- 
-    #             extra_data.update({
-    #                 "run": {
-    #                     "wall_time": 0.0,
-    #                     "sysusr_time": 0.0,
-    #                 },
-    #                 "training": {
-    #                     "wall_time": train_time_wall,
-    #                     "sysusr_time": train_time_sysusr,
-    #                 } ,
-    #                 "optimization": {
-    #                     "wall_time": optimize_time_wall,
-    #                     "sysusr_time": optimize_time_sysusr,
-    #                 },
-    #                 # ...
-    #                 "method": method,
-    #                 "evaluate_output": evaluate_output,
-    #             })
-    #             self.collect_final_output(
-    #                 x_vec=x_vec,
-    #                 extra_data=extra_data,
-    #             )
-    #         return of_values, x_vec
-    #     else:
-    #         raise ValueError("TODO")
-
-
-
+            output = {
+                "experiment_metadata": {
+                    "method": {
+                        "estimator": output_filename,
+                        "estimator_options": \
+                            self._estimator_options.get_options(),
+                    },
+                    "seedmatrix": seedmat,
+                },
+                # TODO: Add number of samples used
+                # Estimated and observed demands
+                "merged_odmat": merged_odmat.to_json(),
+                # Estimated and oberved quantities
+                "merged_simdata": merged_simdata.to_json(),
+                # The history of objective function values
+                "of_history": [
+                    {key: [weight[key], dict_[key][1]] for key in dict_}
+                    for dict_ in training_metadata["of_history"]
+                ] + [
+                    of_eval.of
+                    for of_eval in estimation_task.of_evals.all()
+                ],
+                "n_samples": n_samples,
+                "best_cv_score": best_cv_score,
+                # The history of objective function values when optimizing on the
+                # surrogate model
+                "surrogate_of_history": self.fval_history,
+                # Add the computational time used in each step of the applied
+                # estimation method
+                "timing": {
+                    "run": {
+                        "wall_time": [
+                            run_time_wall
+                        ],
+                        "sysusr_time": [
+                            run_time_sysusr
+                        ],
+                    },
+                    "training": {
+                        "wall_time": [
+                            training_time_wall
+                        ],
+                        "sysusr_time": [
+                            training_time_sysusr
+                        ],
+                    } ,
+                    "optimization": {
+                        "wall_time": \
+                            extra_data["optimization"]["wall_time"],
+                        "sysusr_time": \
+                            extra_data["optimization"]["sysusr_time"],
+                    }
+                },
+            }
+            output_filepath = os.path.join(
+                self.collect_directory,
+                f"{output_filename}.json",
+            )
+            with open(output_filepath, mode="w") as file_object:
+                json.dump(output, file_object, indent=4, sort_keys=True)
+        else:
+            raise ValueError("TODO")
 
     def _training_step(
         self,
@@ -4498,106 +4513,33 @@ class SurrogateModelBasedTravelDemandEstimator(BaseTravelDemandEstimator):
                 train_time_sysusr = train_end_sysusr - train_start_sysusr 
                 train_time_wall = train_end_wall - train_start_wall
  
-                extra_data.update({
+                extra_data = {
                     "run": {
-                        "wall_time": 0.0,
-                        "sysusr_time": 0.0,
+                        "wall_time": [0.0],
+                        "sysusr_time": [0.0],
                     },
                     "training": {
-                        "wall_time": train_time_wall,
-                        "sysusr_time": train_time_sysusr,
+                        "wall_time": [train_time_wall],
+                        "sysusr_time": [train_time_sysusr],
                     } ,
                     "optimization": {
-                        "wall_time": 0.0,
-                        "sysusr_time": 0.0,
+                        "wall_time": [0.0],
+                        "sysusr_time": [0.0],
                     },
                     # ...
                     "method": method,
                     "evaluate_output": evaluate_output,
-                })
+                }
                 self.collect_final_output_training_step(
-                    # x_vec=x_vec,
                     extra_data=extra_data,
+                    n_samples=len(data) + 1,
                 )
         else:
             raise ValueError("TODO")
 
-
     def _optimization_step(
         self,
         collect_final_output: bool = False,
-        ) -> Tuple[Dict[str, Tuple[float, float]], pd.DataFrame]:
-
-        np.random.seed(
-            self._estimator_options.get_value("random_seed")
-        )
-        evaluate_output = self._estimator_options.get_value(
-            "evaluate_output"
-        )
-        method = self._estimator_options.get_value("method")
-
-        self.surrogate_model, _ = self.set_surrogate_model(
-            filename=f"{method}_{evaluate_output}",
-        )
-        if self.surrogate_model is None:
-            raise ValueError("TODO")
-
-        if evaluate_output == "simdata_output":
-            # Evaluate surrogate model modelling simulation output
-            func = self._evaluate_model_predict_counts
-        elif evaluate_output == "of_output":
-            # Evaluate surrogate model modelling objective function output
-            func = self._evaluate_model_predict_of
-        else:
-            raise ValueError("TODO")
-
-        optimize_start_sysusr = time.process_time() 
-        optimize_start_wall = time.time()             
-        # Find minimum of surrogate model and evaluate it with sumo 
-        of_values, x_vec, extra_data = self.optimize(func=func)
-        optimize_end_sysusr = time.process_time()
-        optimize_end_wall = time.time()
-
-        optimize_time_sysusr = optimize_end_sysusr - optimize_start_sysusr
-        optimize_time_wall = optimize_end_wall - optimize_start_wall
-
-        if collect_final_output:
-
-            extra_data.update({
-                "run": {
-                    "wall_time": 0.0,
-                    "sysusr_time": 0.0,
-                },
-                "training": {
-                    "wall_time": 0.0,
-                    "sysusr_time": 0.0,
-                } ,
-                "optimization": {
-                    "wall_time": optimize_time_wall,
-                    "sysusr_time": optimize_time_sysusr,
-                },
-                # ...
-                "method": method,
-                "evaluate_output": evaluate_output,
-            })
-            self.collect_final_output_optimization_step(
-                x_vec=x_vec,
-                extra_data=extra_data,
-            )
-        return of_values, x_vec
-    else:
-        raise ValueError("TODO")
-
-
-
-
-
-
-    def run(
-        self, 
-        x_vec: pd.DataFrame,
-        collect_final_output: bool = False,
-        train_only: bool = True,
         ) -> Tuple[Dict[str, Tuple[float, float]], pd.DataFrame]:
         if self._estimator_options is not None:
             np.random.seed(
@@ -4607,56 +4549,21 @@ class SurrogateModelBasedTravelDemandEstimator(BaseTravelDemandEstimator):
                 "evaluate_output"
             )
             method = self._estimator_options.get_value("method")
-            data = self.extract_data()
-
-            train_start_sysusr = None; train_end_sysusr = None
-            train_start_wall = None; train_end_wall = None
-            if method == "knn":
-                print(
-                    f"Training a new '{method}:{evaluate_output}' model..."
-                )
-                self.surrogate_model, _ = self.set_surrogate_model(
-                    filename=f"{method}_{evaluate_output}",
-                )
-                # If no existing model was loaded, then train a new one
-                if self.surrogate_model is None:
-                    train_start_sysusr = time.process_time()
-                    train_start_wall = time.time()
-                    self.surrogate_model = self.train_knn(
-                        data=data,
-                        evaluate_output=evaluate_output,
-                    )
-                    train_end_sysusr = time.process_time()
-                    train_end_wall = time.time()
-                else:
-                    print(
-                        f"An existing '{method}:{evaluate_output}' model was \
-                        loaded..."
-                    )
-            elif method == "fnn":
-                self.surrogate_model, _ = self.set_surrogate_model(
-                    filename=f"{method}_{evaluate_output}",
-                )
-                if self.surrogate_model is None:
-                    print(
-                        f"Training a new '{method}:{evaluate_output}' model..."
-                    )
-                    train_start_sysusr = time.process_time()
-                    train_start_wall = time.time()
-                    self.surrogate_model = self.train_fnn(
-                        data=data,
-                        evaluate_output=evaluate_output,
-                    )
-                    train_end_sysusr = time.process_time()
-                    train_end_wall = time.time()
-                else:
-                    print(
-                        f"An existing '{method}:{evaluate_output}' model was \
-                        loaded..."
-                    )
-            else:
+            n_samples = self._estimator_options.get_value(
+                "n_samples"
+            )
+            model_filename = self.generate_model_filename(
+                method=method,
+                map_type=evaluate_output.replace("_", "-"),
+                n_samples=n_samples,
+            )
+            self.surrogate_model, grid_search_metadata, training_metadata = \
+                self.set_surrogate_model(
+                    filename=model_filename,
+            )
+            if self.surrogate_model is None:
                 raise ValueError("TODO")
-            
+
             if evaluate_output == "simdata_output":
                 # Evaluate surrogate model modelling simulation output
                 func = self._evaluate_model_predict_counts
@@ -4677,32 +4584,49 @@ class SurrogateModelBasedTravelDemandEstimator(BaseTravelDemandEstimator):
             optimize_time_wall = optimize_end_wall - optimize_start_wall
 
             if collect_final_output:
-                if train_start_sysusr is None:
-                    train_time_sysusr = train_end_sysusr - train_start_sysusr 
-                if train_start_wall is None:
-                    train_time_wall = train_end_wall - train_start_wall
- 
                 extra_data.update({
                     "run": {
-                        "wall_time": 0.0,
-                        "sysusr_time": 0.0,
+                        "wall_time": [0.0],
+                        "sysusr_time": [0.0],
                     },
                     "training": {
-                        "wall_time": train_time_wall,
-                        "sysusr_time": train_time_sysusr,
+                        "wall_time": [0.0],
+                        "sysusr_time": [0.0],
                     } ,
                     "optimization": {
-                        "wall_time": optimize_time_wall,
-                        "sysusr_time": optimize_time_sysusr,
+                        "wall_time": [optimize_time_wall],
+                        "sysusr_time": [optimize_time_sysusr],
                     },
                     # ...
                     "method": method,
                     "evaluate_output": evaluate_output,
                 })
-                self.collect_final_output(
+                self.collect_final_output_optimization_step(
                     x_vec=x_vec,
+                    grid_search_metadata=grid_search_metadata,
+                    training_metadata=training_metadata,
                     extra_data=extra_data,
                 )
+            return of_values, x_vec
+        else:
+            raise ValueError("TODO")
+
+    def run(
+        self, 
+        x_vec: pd.DataFrame,
+        collect_final_output: bool = False,
+        ) -> Tuple[Dict[str, Tuple[float, float]], pd.DataFrame]:
+        if self._estimator_options is not None:
+            np.random.seed(
+                self._estimator_options.get_value("random_seed")
+            )
+            # Execute the training step if necessary
+            self._training_step(collect_final_output=collect_final_output)
+
+            # Execute the optimization step
+            of_values, x_vec = self._optimization_step(
+                collect_final_output=collect_final_output
+            )
             return of_values, x_vec
         else:
             raise ValueError("TODO")
@@ -4844,7 +4768,7 @@ class SurrogateModelBasedTravelDemandEstimator(BaseTravelDemandEstimator):
                     MLPRegressor(
                         solver="adam",
                         max_iter=5000,
-                        activation="relu", # TODO: Try tahn func.
+                        activation="relu",
                         learning_rate_init=0.01,
                         random_state=1
                     )
@@ -5282,8 +5206,7 @@ class SurrogateModelBasedTravelDemandEstimator(BaseTravelDemandEstimator):
                 "neg_mean_squared_error",
             ],
             n_jobs=n_jobs,
-            refit=False,
-            # refit="neg_mean_squared_error",
+            refit="neg_mean_squared_error",
             random_state=1,
             return_train_score=True,
             verbose=1,
@@ -5307,10 +5230,23 @@ class SurrogateModelBasedTravelDemandEstimator(BaseTravelDemandEstimator):
             self.save_model(
                 grid=grid,
                 metadata=results,
-                filename=f"{name}_{evaluate_output}",
+                filename= self.generate_model_filename(
+                    method=name,
+                    map_type=evaluate_output.replace("_", "-"),
+                    n_samples=len(data) + 1, 
+                ),
             )
         return grid
-    
+
+    def generate_model_filename(
+        self,
+        method: str,
+        map_type: str,
+        n_samples: int,
+        base_name: str = "surrogate",
+        ) -> str:
+        return f"{base_name}-{method}-{map_type}-{n_samples}"
+
     def get_model_filepath(self, filename: str) -> str:
         if self._estimator_options is not None:
             sample_directory = self._estimator_options.get_value(
@@ -5324,7 +5260,7 @@ class SurrogateModelBasedTravelDemandEstimator(BaseTravelDemandEstimator):
     def save_model(self, grid, metadata: pd.DataFrame, filename: str) -> None:
         model_filepath = self.get_model_filepath(filename=filename)
         pkl_filepath = f"{model_filepath}.pkl"
-        csv_filepath = f"{model_filepath}_metadata.csv"
+        csv_filepath = f"{model_filepath}_grid-search-metadata.csv"
         if not os.path.exists(pkl_filepath):
             with open(pkl_filepath, "wb" ) as f:
                 pickle.dump(grid, f)
@@ -5338,15 +5274,18 @@ class SurrogateModelBasedTravelDemandEstimator(BaseTravelDemandEstimator):
         else:
             print(f"'.csv' file: {csv_filepath} already exists!")
 
-    def load_model(self, filename: str):
+    def load_model(self, filename: str) -> Tuple:
         filepath = self.get_model_filepath(filename="")
         pkl_file = os.path.join(filepath, f"{filename}.pkl")
-        csv_file = os.path.join(filepath, f"{filename}_metadata.csv")
-        if os.path.exists(pkl_file): #and os.path.exists(csv_file):
+        csv_file = os.path.join(filepath, f"{filename}_grid-search-metadata.csv")
+        json_file = os.path.join(filepath, f"{filename}_training-metadata.json")
+        if os.path.exists(pkl_file):
             with open(pkl_file, mode="rb") as f:
                 model = pickle.load(f)
             # Load some model metadata as well
-            metadata = pd.read_csv(csv_file)
-            return model, metadata
+            grid_search_metadata = pd.read_csv(csv_file)
+            with open(json_file, mode="r") as file_object:
+                training_metadata = json.load(file_object)
+            return model, grid_search_metadata, training_metadata
         else:
-            return None, None
+            return None, None, None

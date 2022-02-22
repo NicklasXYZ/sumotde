@@ -1,4 +1,4 @@
-# SUMO Dynamic Origin-Destination Matrix Estimation v0.1.0
+# SUMO Travel Demand Estimation: Estimation of Dynamic Origin-Destination Matrices v0.1.0
 
 A codebase containing different tools for estimating origin-destination matrices using SUMO.
 
@@ -14,6 +14,7 @@ Currently the main implementation resides in the `/fileserver` directory:
 - The `/fileserver/images` directory contains different plots generated with python scripts `/fileserver/plot1.py` and `/fileserver/plot2.py`
 
 Assuming SUMO (>=1.10.0) and all Python dependencies have been intalled, the `/fileserver/images/main.py` can be executed:
+
 ```bash
 # Run database migrations
 python manage.py makemigrations && python manage migrate

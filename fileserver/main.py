@@ -114,6 +114,7 @@ def run_surrogate_model_based_travel_demand_estimator(
     simulator_options,
     estimator_options,
     collect_directory,
+    step,
 ) -> None:
     file_io, scenario_data = read_scenario_data(config_filepath=config_filepath)
     estimator = SurrogateModelBasedTravelDemandEstimator(
@@ -140,7 +141,20 @@ def run_surrogate_model_based_travel_demand_estimator(
         scenario_data=scenario_data,
         demand_vec=x_vec,
     )
-    estimator.run(x_vec=x_vec, collect_final_output=True)
+    if step == "run":
+        estimator.run(
+            x_vec=x_vec,
+            collect_final_output=True,
+        )
+    if step == "train":
+        estimator._training_step(
+            collect_final_output=True,
+        )
+    elif step == "optimize":
+        estimator._optimization_step(
+            collect_final_output=True,
+        )
+
 
 def generate_samples(
     config_filepath,
@@ -233,6 +247,7 @@ def execute_all(
                 estimator_options = common_estimator_options.copy()
                 estimator_options["weight_configuration"] = weight_configuration
                 estimator_options["n_samples"] = estimator_options["max_evals"]
+                # estimator_options["max_evals"] = estimator_options["max_evals"]
                 estimator_options["sample_directory"] = sample_directory
                 estimator_options["evaluate_output"] = evaluate_output_method
                 estimator_options["method"] = surrogate_model
@@ -245,6 +260,9 @@ def execute_all(
                             simulator_options=simulator_options,
                             estimator_options=estimator_options,
                             collect_directory=collect_directory,
+                            # Assume models have already been fitted so that only the
+                            # optimization step need to be run  
+                            step="optimize",
                         )
                         quit()
                 else:
@@ -256,8 +274,15 @@ def execute_all(
                         simulator_options=simulator_options,
                         estimator_options=estimator_options,
                         collect_directory=collect_directory,
+                        # Assume models have already been fitted so that only the
+                        # optimization step need to be run  
+                        step="optimize",
                     )
-                    quit()
+                    # quit()
+                    break
+                break
+            break
+        break
 
 def generate_scenario(
     scenario_dict: Dict[str, Any],
@@ -286,42 +311,39 @@ def train_models(
     collect_directory: str,
     sample_config: List[int],
 ):
+    # The weight configuration is not used at the training step, so set whatever
+    # value here
+    weight_configuration = weight_configurations[0]
+
+    # Specify the type of surrogate model to use 
     surrogate_models = ["knn"]
     evaluate_output_methods = ["simdata_output"]
 
     runner: Callable = run_surrogate_model_based_travel_demand_estimator
     for surrogate_model in surrogate_models:
         for evaluate_output_method in evaluate_output_methods:
-            for weight_configuration in weight_configurations:
-                for n_samples in sample_config:                
-                    estimator_options = common_estimator_options.copy()
-                    estimator_options["weight_configuration"] = weight_configuration
-                    estimator_options["n_samples"] = n_samples
-                    estimator_options["sample_directory"] = sample_directory
-                    estimator_options["evaluate_output"] = evaluate_output_method
-                    estimator_options["method"] = surrogate_model
-                    if weight_configuration["odmat"] != 0.0:
-                        for seedmat in seedmats:
-                            runner(
-                                config_filepath=config_filepath,
-                                scenario_options={"seedmat": seedmat},
-                                simulator_class=SumoMesoSimulationRun,
-                                simulator_options=simulator_options,
-                                estimator_options=estimator_options,
-                                collect_directory=collect_directory,
-                            )
-                            quit()
-                    else:
-                        seedmat = seedmats[0]
-                        runner(
-                            config_filepath=config_filepath,
-                            scenario_options={"seedmat": seedmat},
-                            simulator_class=SumoMesoSimulationRun,
-                            simulator_options=simulator_options,
-                            estimator_options=estimator_options,
-                            collect_directory=collect_directory,
-                        )
-                        quit()
+            for n_samples in sample_config:                
+                estimator_options = common_estimator_options.copy()
+                estimator_options["weight_configuration"] = weight_configuration
+                estimator_options["n_samples"] = n_samples
+                estimator_options["sample_directory"] = sample_directory
+                estimator_options["evaluate_output"] = evaluate_output_method
+                estimator_options["method"] = surrogate_model
+                seedmat = seedmats[0]
+                runner(
+                    config_filepath=config_filepath,
+                    scenario_options={"seedmat": seedmat},
+                    simulator_class=SumoMesoSimulationRun,
+                    simulator_options=simulator_options,
+                    estimator_options=estimator_options,
+                    collect_directory=collect_directory,
+                    step="train",
+                )
+                # quit()
+                break
+            break
+        break
+
 
 if "__main__" == __name__:
     print("\nExecuting...\n")
@@ -351,8 +373,8 @@ if "__main__" == __name__:
     steps = [
         # "generate_network",
         # "generate_scenario",
-        # "generate_samples",
-        "train_models",
+        "generate_samples",
+        # "train_models",
         # "execute_all",
     ]
     if "generate_network" in steps:
@@ -422,11 +444,13 @@ if "__main__" == __name__:
         estimator_options = common_estimator_options.copy()
         train_models(
             config_filepath=config_filepath,
-            scenario_options={"seedmat": seedmat},
-            simulator_class=SumoMesoSimulationRun,
+            sample_directory=sample_directory,
             simulator_options=simulator_options,
-            estimator_options=estimator_options,
-            # Train models using 200 samples...
+            common_estimator_options=common_estimator_options,
+            weight_configurations=weight_configurations,
+            seedmats=seedmats,
+            collect_directory="run01",
+            # Train different models using 200 samples...
             sample_config=[200],
         )
     if "execute_all" in steps:
@@ -439,4 +463,15 @@ if "__main__" == __name__:
             seedmats=seedmats,
             collect_directory="run01",
         )
+    
+    for step in steps:
+        if step not in [
+            "generate_network",
+            "generate_scenario",
+            "generate_samples",
+            "train_models",
+            "execute_all",
+        ]:
+            raise ValueError("TODO")
+
     print("\nExiting...\n")
